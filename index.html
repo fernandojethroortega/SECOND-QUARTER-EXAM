@@ -1,230 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Online Exam Presentation System</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f8fafc;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    #container {
-      width: 90%;
-      max-width: 900px;
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 25px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #2563eb;
-      margin-bottom: 20px;
-    }
-    textarea {
-      width: 100%;
-      height: 250px;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      resize: none;
-      font-size: 16px;
-      font-family: "Segoe UI", sans-serif;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #1e40af;
-    }
-    #exam {
-      text-align: center;
-      display: none;
-    }
-    #questionText {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    .option {
-      border: 1px solid #ccc;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 8px auto;
-      width: 80%;
-      text-align: left;
-      transition: 0.3s;
-    }
-    .option:hover {
-      background: #e0f2fe;
-    }
-    #controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 20px;
-    }
-    #timer {
-      font-size: 22px;
-      font-weight: bold;
-      color: #dc2626;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Online Exam Presentation System</title>
+<style>
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .container {
+    background: #fff;
+    width: 700px;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  textarea {
+    width: 100%;
+    height: 250px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    resize: none;
+    font-size: 15px;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #exam {
+    display: none;
+  }
+  .question {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  .option {
+    margin: 8px auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    width: 80%;
+    text-align: left;
+    font-size: 18px;
+    background: #fafafa;
+  }
+  .timer {
+    font-size: 22px;
+    color: #dc3545;
+    margin-top: 10px;
+  }
+  .nav-btns {
+    margin-top: 20px;
+  }
+</style>
 </head>
 <body>
-  <div id="container">
-    <h1>🧾 Online Exam Presentation System</h1>
 
-    <div id="inputArea">
-      <p><strong>Paste your exam text below:</strong></p>
-      <textarea id="examText" placeholder="Example:
-1. What is the capital of the Philippines?
-A. Davao
-B. Manila
-C. Cebu
-D. Baguio
+<div class="container" id="inputContainer">
+  <h2>📝 Online Exam Generator</h2>
+  <p>Paste your exam text below. Use the format:<br>
+  <code>1. Question?<br>A. Option 1<br>B. Option 2<br>C. Option 3<br>D. Option 4</code></p>
+  <textarea id="examText" placeholder="Paste your exam text here..."></textarea><br>
+  <button id="generateBtn">Generate Exam Slides</button>
+</div>
 
-2. What color is the sky?
-A. Blue
-B. Green
-C. Red
-D. Yellow
-"></textarea>
-      <div style="text-align:center; margin-top:20px;">
-        <button id="generateBtn">Generate Slides</button>
-      </div>
-    </div>
-
-    <div id="exam">
-      <div id="questionText"></div>
-      <div id="options"></div>
-      <div id="controls">
-        <button id="prevBtn">⬅ Prev</button>
-        <div id="timer">60</div>
-        <button id="nextBtn">Next ➡</button>
-      </div>
-    </div>
+<div class="container" id="exam">
+  <div id="questionText" class="question"></div>
+  <div id="options"></div>
+  <div class="timer">⏳ Time left: <span id="timer">60</span>s</div>
+  <div class="nav-btns">
+    <button id="prevBtn">⬅ Previous</button>
+    <button id="nextBtn">Next ➡</button>
   </div>
+</div>
 
-  <script>
-    const examText = document.getElementById("examText");
-    const generateBtn = document.getElementById("generateBtn");
-    const inputArea = document.getElementById("inputArea");
-    const exam = document.getElementById("exam");
-    const questionText = document.getElementById("questionText");
-    const optionsDiv = document.getElementById("options");
-    const timerDiv = document.getElementById("timer");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
+<div class="container" id="startContainer" style="display:none;">
+  <h2>Exam Generated Successfully!</h2>
+  <p>Click below to start presenting the exam.</p>
+  <button id="startExamBtn">Start Exam</button>
+</div>
 
-    let questions = [];
-    let currentIndex = 0;
-    let timer = 60;
-    let interval;
+<script>
+  const examText = document.getElementById("examText");
+  const generateBtn = document.getElementById("generateBtn");
+  const exam = document.getElementById("exam");
+  const startContainer = document.getElementById("startContainer");
+  const questionText = document.getElementById("questionText");
+  const optionsDiv = document.getElementById("options");
+  const timerSpan = document.getElementById("timer");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const startExamBtn = document.getElementById("startExamBtn");
+  const inputContainer = document.getElementById("inputContainer");
 
-    generateBtn.addEventListener("click", () => {
-      const text = examText.value.trim();
-      if (!text) {
-        alert("Please paste your exam text first.");
-        return;
+  let questions = [];
+  let currentIndex = 0;
+  let timer = 60;
+  let interval;
+
+  generateBtn.addEventListener("click", () => {
+    const text = examText.value.trim();
+    if (!text) {
+      alert("Please paste exam text first.");
+      return;
+    }
+    questions = parseQuestions(text);
+    if (questions.length === 0) {
+      alert("No valid questions found. Please use proper numbering and options (A., B., C., D.).");
+      return;
+    }
+    inputContainer.style.display = "none";
+    startContainer.style.display = "block";
+  });
+
+  startExamBtn.addEventListener("click", () => {
+    startContainer.style.display = "none";
+    exam.style.display = "block";
+    currentIndex = 0;
+    showQuestion();
+    startTimer();
+  });
+
+  function parseQuestions(text) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+    const parsed = [];
+    let currentQ = null;
+    lines.forEach(line => {
+      const qMatch = line.match(/^(\d+[\.\)\-])\s*(.*)/);
+      const optMatch = line.match(/^([A-Da-d][\.\)\-])\s*(.*)/);
+      if (qMatch) {
+        if (currentQ) parsed.push(currentQ);
+        currentQ = { question: qMatch[2].trim(), options: [] };
+      } else if (optMatch && currentQ) {
+        currentQ.options.push(optMatch[1].toUpperCase() + " " + optMatch[2].trim());
       }
+    });
+    if (currentQ) parsed.push(currentQ);
+    return parsed;
+  }
 
-      questions = parseQuestions(text);
-      if (questions.length === 0) {
-        alert("No valid questions found! Make sure they start with 1., 2., or 1)");
-        return;
-      }
+  function showQuestion() {
+    const q = questions[currentIndex];
+    questionText.textContent = `${currentIndex + 1}. ${q.question}`;
+    optionsDiv.innerHTML = "";
+    q.options.forEach(opt => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = opt;
+      optionsDiv.appendChild(div);
+    });
+    timer = 60;
+    timerSpan.textContent = timer;
+  }
 
-      inputArea.style.display = "none";
-      exam.style.display = "block";
-      currentIndex = 0;
+  function startTimer() {
+    clearInterval(interval);
+    interval = setInterval(() => {
+      timer--;
+      timerSpan.textContent = timer;
+      if (timer <= 0) nextQuestion();
+    }, 1000);
+  }
+
+  function nextQuestion() {
+    if (currentIndex < questions.length - 1) {
+      currentIndex++;
       showQuestion();
       startTimer();
-    });
-
-    function parseQuestions(text) {
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
-      const parsed = [];
-      let currentQ = null;
-
-      lines.forEach(line => {
-        const qMatch = line.match(/^(\d+[\.\)\-])\s*(.*)/); // 1. or 1) or 1-
-        const optMatch = line.match(/^([A-Da-d][\.\)\-])\s*(.*)/); // A. or A) or A-
-
-        if (qMatch) {
-          if (currentQ) parsed.push(currentQ);
-          currentQ = { question: qMatch[2].trim(), options: [] };
-        } else if (optMatch && currentQ) {
-          currentQ.options.push(optMatch[2].trim());
-        }
-      });
-
-      if (currentQ) parsed.push(currentQ);
-      return parsed;
-    }
-
-    function showQuestion() {
-      const q = questions[currentIndex];
-      questionText.textContent = `${currentIndex + 1}. ${q.question}`;
-      optionsDiv.innerHTML = "";
-      q.options.forEach(opt => {
-        const div = document.createElement("div");
-        div.className = "option";
-        div.textContent = opt;
-        optionsDiv.appendChild(div);
-      });
-      timer = 60;
-      timerDiv.textContent = timer;
-    }
-
-    function startTimer() {
+    } else {
       clearInterval(interval);
-      interval = setInterval(() => {
-        timer--;
-        timerDiv.textContent = timer;
-        if (timer <= 0) nextQuestion();
-      }, 1000);
+      questionText.textContent = "🎉 Exam Presentation Finished!";
+      optionsDiv.innerHTML = "";
+      document.querySelector(".timer").style.display = "none";
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
     }
+  }
 
-    function nextQuestion() {
-      if (currentIndex < questions.length - 1) {
-        currentIndex++;
-        showQuestion();
-        startTimer();
-      } else {
-        clearInterval(interval);
-        questionText.textContent = "🎉 Exam Presentation Finished!";
-        optionsDiv.innerHTML = "";
-        timerDiv.textContent = "";
-        nextBtn.disabled = true;
-        prevBtn.disabled = true;
-      }
+  function prevQuestion() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      showQuestion();
+      startTimer();
     }
+  }
 
-    function prevQuestion() {
-      if (currentIndex > 0) {
-        currentIndex--;
-        showQuestion();
-        startTimer();
-      }
-    }
+  nextBtn.addEventListener("click", nextQuestion);
+  prevBtn.addEventListener("click", prevQuestion);
+</script>
 
-    nextBtn.addEventListener("click", nextQuestion);
-    prevBtn.addEventListener("click", prevQuestion);
-  </script>
 </body>
 </html>
