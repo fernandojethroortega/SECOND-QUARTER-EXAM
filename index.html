@@ -1,292 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Online Exam Presentation System — PPT Download Fixed</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Exam Presentation System</title>
 
-  <!-- PptxGenJS bundle (reliable browser build) -->
-  <script src="https://unpkg.com/pptxgenjs@3.11.0/dist/pptxgen.bundle.js"></script>
+<!-- PowerPoint generator -->
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.11.1/dist/pptxgen.bundle.js"></script>
 
-  <style>
-    body { font-family: "Segoe UI", Arial, sans-serif; background: linear-gradient(135deg,#007bff,#00c6ff); margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; }
-    .container { background:#fff; width:920px; max-width:95%; border-radius:18px; padding:36px; box-shadow:0 12px 40px rgba(0,0,0,0.18); text-align:center; }
-    h2 { color:#0066cc; font-size:30px; margin:6px 0 14px; }
-    pre.example { text-align:left; background:#eef8ff; padding:12px; border-radius:10px; display:inline-block; width:100%; box-sizing:border-box; font-size:15px; }
-    textarea { width:100%; height:260px; margin-top:12px; padding:14px; border-radius:10px; border:1px solid #d0e7ff; font-size:18px; box-sizing:border-box; resize:vertical; }
-    .btn { display:inline-block; margin:12px 8px; padding:12px 22px; border-radius:10px; border:0; cursor:pointer; background:#007bff; color:#fff; font-size:18px; font-weight:600; }
-    .btn.secondary { background:#0b74ff; }
-    .btn.ghost { background:#f3f6fb; color:#123; border:1px solid #dbeffd; }
-    .hidden { display:none; }
-    .question { font-size:30px; font-weight:700; color:#143; margin:12px 0; }
-    .option { width:85%; margin:10px auto; padding:14px; border-radius:12px; background:#fbfdff; border:1px solid #e6f2ff; font-size:22px; text-align:left; }
-    .timer { font-size:28px; font-weight:700; color:#c53030; margin-top:14px; }
-    .controls { margin-top:20px; }
-  </style>
+<style>
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #007bff, #00c6ff);
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    background: #fff;
+    width: 900px;
+    max-width: 95%;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  h2 {
+    color: #007bff;
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  textarea {
+    width: 100%;
+    height: 250px;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    resize: none;
+    font-size: 18px;
+  }
+  button {
+    margin: 10px;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 10px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s;
+  }
+  button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+  }
+  #exam {
+    display: none;
+  }
+  .question {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    color: #333;
+  }
+  .option {
+    margin: 10px auto;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    width: 80%;
+    text-align: left;
+    font-size: 22px;
+    background: #f7f9fc;
+  }
+  .timer {
+    font-size: 30px;
+    color: #dc3545;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+  .nav-btns {
+    margin-top: 25px;
+  }
+  .success {
+    color: green;
+    font-size: 22px;
+  }
+</style>
 </head>
 <body>
-  <div class="container" id="inputContainer">
-    <h2>📝 Online Exam Generator</h2>
-    <p style="font-size:16px">Paste your exam text and click <strong>Generate</strong>. Accepts question formats like <code>1. Question</code> and choices <code>A. Option</code> (also accepts 1), A), 1-, A-).</code></p>
 
-    <pre class="example">
+<div class="container" id="inputContainer">
+  <h2>📝 Online Exam Generator</h2>
+  <p style="font-size:18px;">Paste your exam text below. Format should be like:</p>
+  <pre style="text-align:left; background:#eef5ff; padding:10px; border-radius:10px; font-size:16px;">
 1. What is the capital of the Philippines?
 A. Davao
 B. Manila
 C. Cebu
 D. Baguio
+  </pre>
+  <textarea id="examText" placeholder="Paste your exam text here..."></textarea><br>
+  <button id="generateBtn">Generate Exam Slides</button>
+</div>
 
-2) Which planet is called the Red Planet?
-A) Earth
-B) Mars
-C) Venus
-D) Jupiter
-    </pre>
+<div class="container" id="startContainer" style="display:none;">
+  <h2>Exam Generated Successfully!</h2>
+  <p class="success">✅ Your exam is ready to present.</p>
+  <button id="startExamBtn">Start Exam</button>
+  <button id="downloadPPTBtn">Download as PowerPoint</button>
+</div>
 
-    <textarea id="examText" placeholder="Paste exam text here (use 1., A. or 1), A), etc.)"></textarea>
-    <div>
-      <button id="generateBtn" class="btn">Generate Exam Slides</button>
-      <button id="downloadPPTBtn" class="btn ghost" disabled>Download as PowerPoint</button>
-    </div>
+<div class="container" id="exam">
+  <div id="questionText" class="question"></div>
+  <div id="options"></div>
+  <div class="timer">⏳ Time left: <span id="timer">60</span>s</div>
+  <div class="nav-btns">
+    <button id="prevBtn">⬅ Previous</button>
+    <button id="nextBtn">Next ➡</button>
   </div>
+</div>
 
-  <div class="container hidden" id="startContainer">
-    <h2>Exam Generated ✅</h2>
-    <p style="font-size:16px; color:green">Slides are ready. Start presenting or download as a PowerPoint.</p>
-    <div style="margin-top:14px">
-      <button id="startExamBtn" class="btn">Start Exam</button>
-      <button id="backBtn" class="btn ghost">Edit Text</button>
-      <button id="downloadPPTBtn2" class="btn secondary">Download as PowerPoint</button>
-    </div>
-  </div>
-
-  <div class="container hidden" id="examContainer">
-    <div id="questionText" class="question"></div>
-    <div id="optionsArea"></div>
-    <div class="timer">⏳ Time left: <span id="timer">60</span>s</div>
-    <div class="controls">
-      <button id="prevBtn" class="btn ghost">⬅ Previous</button>
-      <button id="nextBtn" class="btn">Next ➡</button>
-    </div>
-  </div>
+<div class="container" id="endContainer" style="display:none;">
+  <h2>🎉 Exam Presentation Finished!</h2>
+  <p class="success">All questions have been presented.</p>
+  <button id="repeatExamBtn">🔁 Repeat Exam</button>
+  <button id="downloadAgainBtn">⬇ Download as PowerPoint</button>
+</div>
 
 <script>
-/* Main logic: parsing, presenting, PPT download with error handling */
-(() => {
-  const examTextEl = document.getElementById('examText');
-  const generateBtn = document.getElementById('generateBtn');
-  const downloadPPTBtn = document.getElementById('downloadPPTBtn');
-  const downloadPPTBtn2 = document.getElementById('downloadPPTBtn2');
-  const inputContainer = document.getElementById('inputContainer');
-  const startContainer = document.getElementById('startContainer');
-  const startExamBtn = document.getElementById('startExamBtn');
-  const backBtn = document.getElementById('backBtn');
-  const examContainer = document.getElementById('examContainer');
-  const questionTextEl = document.getElementById('questionText');
-  const optionsArea = document.getElementById('optionsArea');
-  const timerEl = document.getElementById('timer');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
+  const examText = document.getElementById("examText");
+  const generateBtn = document.getElementById("generateBtn");
+  const exam = document.getElementById("exam");
+  const startContainer = document.getElementById("startContainer");
+  const questionText = document.getElementById("questionText");
+  const optionsDiv = document.getElementById("options");
+  const timerSpan = document.getElementById("timer");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const startExamBtn = document.getElementById("startExamBtn");
+  const inputContainer = document.getElementById("inputContainer");
+  const downloadPPTBtn = document.getElementById("downloadPPTBtn");
+  const endContainer = document.getElementById("endContainer");
+  const repeatExamBtn = document.getElementById("repeatExamBtn");
+  const downloadAgainBtn = document.getElementById("downloadAgainBtn");
 
   let questions = [];
   let currentIndex = 0;
   let timer = 60;
-  let intervalID = null;
+  let interval;
+
+  generateBtn.addEventListener("click", () => {
+    const text = examText.value.trim();
+    if (!text) {
+      alert("Please paste your exam text first!");
+      return;
+    }
+    questions = parseQuestions(text);
+    if (questions.length === 0) {
+      alert("No valid questions found! Make sure your format uses 1. and A.–D. options.");
+      return;
+    }
+    inputContainer.style.display = "none";
+    startContainer.style.display = "block";
+  });
+
+  startExamBtn.addEventListener("click", () => {
+    startContainer.style.display = "none";
+    exam.style.display = "block";
+    currentIndex = 0;
+    showQuestion();
+    startTimer();
+  });
 
   function parseQuestions(text) {
-    // Normalize and split into non-empty lines
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
     const parsed = [];
     let currentQ = null;
 
-    for (const raw of lines) {
-      // question patterns: 1. 1) 1- 1:
-      const qMatch = raw.match(/^(\d+[\.\)\-:])\s*(.*)$/);
-      // option patterns: A. A) A- A:
-      const optMatch = raw.match(/^([A-Da-d][\.\)\-:])\s*(.*)$/);
+    lines.forEach(line => {
+      const qMatch = line.match(/^(\d+[\.\)\-])\s*(.*)/);
+      const optMatch = line.match(/^([A-Da-d][\.\)\-])\s*(.*)/);
 
       if (qMatch) {
         if (currentQ) parsed.push(currentQ);
         currentQ = { question: qMatch[2].trim(), options: [] };
       } else if (optMatch && currentQ) {
-        // store with letter prefix like "A. Option text"
-        const letter = optMatch[1].slice(0,1).toUpperCase();
-        currentQ.options.push(`${letter}. ${optMatch[2].trim()}`);
-      } else {
-        // Line doesn't match q or opt:
-        // If there's a current question, treat as continuation of question text.
-        if (currentQ) {
-          currentQ.question += ' ' + raw;
-        }
+        currentQ.options.push(optMatch[1].toUpperCase() + " " + optMatch[2].trim());
       }
-    }
+    });
     if (currentQ) parsed.push(currentQ);
     return parsed;
   }
 
-  function showQuestion(index) {
-    const q = questions[index];
-    questionTextEl.textContent = `${index + 1}. ${q.question}`;
-    optionsArea.innerHTML = '';
-    for (const opt of q.options) {
-      const d = document.createElement('div');
-      d.className = 'option';
-      d.textContent = opt;
-      optionsArea.appendChild(d);
-    }
+  function showQuestion() {
+    const q = questions[currentIndex];
+    questionText.textContent = `${currentIndex + 1}. ${q.question}`;
+    optionsDiv.innerHTML = "";
+    q.options.forEach(opt => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = opt;
+      optionsDiv.appendChild(div);
+    });
     timer = 60;
-    timerEl.textContent = timer;
+    timerSpan.textContent = timer;
   }
 
-  function startCountdown() {
-    clearInterval(intervalID);
-    intervalID = setInterval(() => {
+  function startTimer() {
+    clearInterval(interval);
+    interval = setInterval(() => {
       timer--;
-      timerEl.textContent = timer;
-      if (timer <= 0) {
-        goNext();
-      }
+      timerSpan.textContent = timer;
+      if (timer <= 0) nextQuestion();
     }, 1000);
   }
 
-  function goNext() {
+  function nextQuestion() {
     if (currentIndex < questions.length - 1) {
       currentIndex++;
-      showQuestion(currentIndex);
-      startCountdown();
+      showQuestion();
+      startTimer();
     } else {
-      clearInterval(intervalID);
-      questionTextEl.textContent = '🎉 Exam Presentation Finished!';
-      optionsArea.innerHTML = '';
-      timerEl.textContent = '';
-      prevBtn.disabled = true; nextBtn.disabled = true;
+      clearInterval(interval);
+      exam.style.display = "none";
+      endContainer.style.display = "block";
     }
   }
 
-  function goPrev() {
+  function prevQuestion() {
     if (currentIndex > 0) {
       currentIndex--;
-      showQuestion(currentIndex);
-      startCountdown();
+      showQuestion();
+      startTimer();
     }
   }
 
-  // Generate button: parse and show start screen
-  generateBtn.addEventListener('click', () => {
-    const text = examTextEl.value.trim();
-    if (!text) { alert('Please paste your exam text first.'); return; }
-    questions = parseQuestions(text);
-    if (!questions.length) {
-      alert('No valid questions found. Use numbering (1., 2., or 1) ) and options A.-D. lines.');
-      return;
-    }
-    // enable download button
-    downloadPPTBtn.disabled = false;
-    inputContainer.classList.add('hidden');
-    startContainer.classList.remove('hidden');
-  });
+  nextBtn.addEventListener("click", nextQuestion);
+  prevBtn.addEventListener("click", prevQuestion);
 
-  // Back to edit
-  backBtn.addEventListener('click', () => {
-    startContainer.classList.add('hidden');
-    inputContainer.classList.remove('hidden');
-    downloadPPTBtn.disabled = true;
-  });
-
-  // Start exam
-  startExamBtn.addEventListener('click', () => {
-    startContainer.classList.add('hidden');
-    examContainer.classList.remove('hidden');
+  repeatExamBtn.addEventListener("click", () => {
+    endContainer.style.display = "none";
+    exam.style.display = "block";
     currentIndex = 0;
-    prevBtn.disabled = false; nextBtn.disabled = false;
-    showQuestion(currentIndex);
-    startCountdown();
+    showQuestion();
+    startTimer();
   });
 
-  prevBtn.addEventListener('click', () => { goPrev(); });
-  nextBtn.addEventListener('click', () => { goNext(); });
+  downloadPPTBtn.addEventListener("click", downloadPowerPoint);
+  downloadAgainBtn.addEventListener("click", downloadPowerPoint);
 
-  // PPT generation helper
-  async function generatePPT() {
-    if (!questions.length) { alert('No slides available to export.'); return; }
-
-    // Ensure library loaded
-    if (typeof PptxGenJS === 'undefined') {
-      alert('PowerPoint library not loaded. Check your internet connection.');
+  function downloadPowerPoint() {
+    if (questions.length === 0) {
+      alert("No questions to export.");
       return;
     }
-
-    try {
-      const pptx = new PptxGenJS();
-      pptx.author = 'Exam Generator';
-      pptx.version = '1.0';
-
-      // Use a large, readable layout and font sizes for projection
-      questions.forEach((q, i) => {
-        const slide = pptx.addSlide();
-        // Background (light)
-        slide.background = { color: 'FFFFFF' };
-
-        // Add question title (big)
-        slide.addText(`${i + 1}. ${q.question}`, {
-          x: 0.5, y: 0.4, w: 9, h: 1.6,
-          fontSize: 28,
-          bold: true,
-          color: '003366',
-          align: 'left',
-          margin: 0.1
-        });
-
-        // Add options as separate text boxes with spacing
-        q.options.forEach((opt, idx) => {
-          slide.addText(opt, {
-            x: 0.6, y: 1.6 + idx * 0.8, w: 8.8, h: 0.7,
-            fontSize: 22,
-            color: '000000',
-            align: 'left',
-            margin: 0.1
-          });
-        });
+    const pptx = new PptxGenJS();
+    questions.forEach((q, i) => {
+      const slide = pptx.addSlide();
+      slide.addText(`${i + 1}. ${q.question}`, { x: 0.5, y: 0.5, fontSize: 28, color: "003366", bold: true });
+      q.options.forEach((opt, idx) => {
+        slide.addText(opt, { x: 1, y: 1.2 + idx * 0.7, fontSize: 24, color: "000000" });
       });
-
-      // Trigger download - returns a Promise
-      await pptx.writeFile({ fileName: 'Exam_Presentation.pptx' });
-    } catch (err) {
-      console.error('PPT generation error:', err);
-      alert('Failed to generate PowerPoint: ' + (err?.message || err));
-    }
+    });
+    pptx.writeFile({ fileName: "Exam_Presentation.pptx" });
   }
-
-  // Hook download buttons (two places)
-  downloadPPTBtn.addEventListener('click', async () => {
-    downloadPPTBtn.disabled = true;
-    downloadPPTBtn.textContent = 'Preparing...';
-    await generatePPT();
-    downloadPPTBtn.disabled = false;
-    downloadPPTBtn.textContent = 'Download as PowerPoint';
-  });
-
-  downloadPPTBtn2.addEventListener('click', async () => {
-    downloadPPTBtn2.disabled = true;
-    downloadPPTBtn2.textContent = 'Preparing...';
-    await generatePPT();
-    downloadPPTBtn2.disabled = false;
-    downloadPPTBtn2.textContent = 'Download as PowerPoint';
-  });
-
-  // Keyboard navigation: left / right arrow
-  document.addEventListener('keydown', (e) => {
-    if (examContainer.classList.contains('hidden')) return;
-    if (e.key === 'ArrowRight') goNext();
-    if (e.key === 'ArrowLeft') goPrev();
-    if (e.key === ' ') { // space toggles pause/start
-      e.preventDefault();
-      if (intervalID) { clearInterval(intervalID); intervalID = null; }
-      else startCountdown();
-    }
-  });
-
-})();
 </script>
+
 </body>
 </html>
