@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Exam Presentation System</title>
 
-<!-- ✅ PowerPoint generator -->
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.10.0/dist/pptxgen.bundle.js"></script>
 
 <style>
@@ -26,6 +25,7 @@
     border-radius: 20px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     text-align: center;
+    position: relative;
   }
   h2 {
     color: #007bff;
@@ -79,18 +79,30 @@
     font-size: 22px;
     background: #f7f9fc;
   }
-  .timer {
-    font-size: 30px;
-    color: #dc3545;
-    margin-top: 20px;
-    font-weight: bold;
-  }
   .nav-btns {
     margin-top: 25px;
   }
   .success {
     color: green;
     font-size: 22px;
+  }
+
+  /* --- TIMER STYLING --- */
+  .circle-timer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 40%, #007bff 90%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: #dc3545;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
   }
 </style>
 </head>
@@ -118,9 +130,9 @@ D. Baguio
 </div>
 
 <div class="container" id="exam">
+  <div class="circle-timer" id="circleTimer">60</div>
   <div id="questionText" class="question"></div>
   <div id="options"></div>
-  <div class="timer">⏳ Time left: <span id="timer">60</span>s</div>
   <div class="nav-btns">
     <button id="prevBtn">⬅ Previous</button>
     <button id="nextBtn">Next ➡</button>
@@ -142,7 +154,6 @@ D. Baguio
   const exam = document.getElementById("exam");
   const questionText = document.getElementById("questionText");
   const optionsDiv = document.getElementById("options");
-  const timerSpan = document.getElementById("timer");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const startExamBtn = document.getElementById("startExamBtn");
@@ -152,6 +163,7 @@ D. Baguio
   const repeatExamBtn = document.getElementById("repeatExamBtn");
   const downloadAgainBtn = document.getElementById("downloadAgainBtn");
   const jumpSelect = document.getElementById("jumpSelect");
+  const circleTimer = document.getElementById("circleTimer");
 
   let questions = [];
   let currentIndex = 0;
@@ -221,14 +233,14 @@ D. Baguio
       optionsDiv.appendChild(div);
     });
     timer = 60;
-    timerSpan.textContent = timer;
+    circleTimer.textContent = timer;
   }
 
   function startTimer() {
     clearInterval(interval);
     interval = setInterval(() => {
       timer--;
-      timerSpan.textContent = timer;
+      circleTimer.textContent = timer;
       if (timer <= 0) nextQuestion();
     }, 1000);
   }
