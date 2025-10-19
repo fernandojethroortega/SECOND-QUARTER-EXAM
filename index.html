@@ -17,6 +17,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
+    overflow: hidden;
   }
   .container {
     background: #fff;
@@ -89,7 +90,7 @@
     font-size: 22px;
   }
 
-  /* --- TIMER STYLING (repositioned outside) --- */
+  /* --- TIMER --- */
   .circle-timer {
     position: fixed;
     top: 30px;
@@ -107,12 +108,28 @@
     box-shadow: 0 0 15px rgba(0,0,0,0.3);
     z-index: 5;
   }
+
+  /* Fullscreen label */
+  #fullscreenBtn {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 10;
+    background: #28a745;
+  }
+  #fullscreenBtn:hover {
+    background: #1f8a3b;
+  }
+
 </style>
 </head>
 <body>
 
-<!-- Floating Timer (outside container) -->
+<!-- Floating Timer -->
 <div class="circle-timer" id="circleTimer">60</div>
+
+<!-- Fullscreen Button -->
+<button id="fullscreenBtn">🖥️ Full Screen</button>
 
 <div class="container" id="inputContainer">
   <h2>📝 Online Exam Generator</h2>
@@ -169,11 +186,25 @@ D. Baguio
   const downloadAgainBtn = document.getElementById("downloadAgainBtn");
   const jumpSelect = document.getElementById("jumpSelect");
   const circleTimer = document.getElementById("circleTimer");
+  const fullscreenBtn = document.getElementById("fullscreenBtn");
 
   let questions = [];
   let currentIndex = 0;
   let timer = 60;
   let interval;
+
+  // --- FULLSCREEN FUNCTIONALITY ---
+  fullscreenBtn.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        alert(`Error enabling full screen: ${err.message}`);
+      });
+      fullscreenBtn.textContent = "❌ Exit Full Screen";
+    } else {
+      document.exitFullscreen();
+      fullscreenBtn.textContent = "🖥️ Full Screen";
+    }
+  });
 
   generateBtn.addEventListener("click", () => {
     const text = examText.value.trim();
