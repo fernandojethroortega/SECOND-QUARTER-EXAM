@@ -4,67 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Online Exam Presentation System</title>
-  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", sans-serif;
       background: #f8fafc;
       margin: 0;
       padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
     }
     #container {
-      width: 80%;
-      max-width: 800px;
+      width: 90%;
+      max-width: 900px;
       background: white;
       padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.1);
     }
     h1 {
-      font-size: 28px;
-      margin-bottom: 20px;
+      text-align: center;
       color: #2563eb;
+      margin-bottom: 20px;
     }
-    .options {
-      margin-top: 20px;
-      text-align: left;
-    }
-    .option {
+    textarea {
+      width: 100%;
+      height: 250px;
       padding: 10px;
-      border: 1px solid #ccc;
       border-radius: 8px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .option:hover {
-      background-color: #e0f2fe;
-    }
-    #controls {
-      margin-top: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      border: 1px solid #ccc;
+      resize: none;
+      font-size: 16px;
+      font-family: "Segoe UI", sans-serif;
     }
     button {
-      background-color: #2563eb;
+      background: #2563eb;
       color: white;
       border: none;
       padding: 10px 20px;
+      font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
     }
     button:hover {
-      background-color: #1e40af;
+      background: #1e40af;
+    }
+    #exam {
+      text-align: center;
+      display: none;
+    }
+    #questionText {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .option {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 8px auto;
+      width: 80%;
+      text-align: left;
+      transition: 0.3s;
+    }
+    .option:hover {
+      background: #e0f2fe;
+    }
+    #controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
     }
     #timer {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
       color: #dc2626;
     }
@@ -72,13 +87,31 @@
 </head>
 <body>
   <div id="container">
-    <h1>Online Exam Presentation System</h1>
-    <input type="file" id="fileInput" accept=".txt,.docx" />
-    <p id="instruction">Upload a .txt or .docx file to start.</p>
+    <h1>🧾 Online Exam Presentation System</h1>
 
-    <div id="exam" style="display:none;">
-      <h2 id="questionText"></h2>
-      <div class="options" id="options"></div>
+    <div id="inputArea">
+      <p><strong>Paste your exam text below:</strong></p>
+      <textarea id="examText" placeholder="Example:
+1. What is the capital of the Philippines?
+A. Davao
+B. Manila
+C. Cebu
+D. Baguio
+
+2. What color is the sky?
+A. Blue
+B. Green
+C. Red
+D. Yellow
+"></textarea>
+      <div style="text-align:center; margin-top:20px;">
+        <button id="generateBtn">Generate Slides</button>
+      </div>
+    </div>
+
+    <div id="exam">
+      <div id="questionText"></div>
+      <div id="options"></div>
       <div id="controls">
         <button id="prevBtn">⬅ Prev</button>
         <div id="timer">60</div>
@@ -88,68 +121,55 @@
   </div>
 
   <script>
-    const fileInput = document.getElementById("fileInput");
+    const examText = document.getElementById("examText");
+    const generateBtn = document.getElementById("generateBtn");
+    const inputArea = document.getElementById("inputArea");
     const exam = document.getElementById("exam");
     const questionText = document.getElementById("questionText");
     const optionsDiv = document.getElementById("options");
     const timerDiv = document.getElementById("timer");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
-    const instruction = document.getElementById("instruction");
 
     let questions = [];
     let currentIndex = 0;
     let timer = 60;
     let interval;
 
-    fileInput.addEventListener("change", handleFile);
-
-    async function handleFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const ext = file.name.split(".").pop().toLowerCase();
-      let text = "";
-
-      if (ext === "docx") {
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await window.mammoth.extractRawText({ arrayBuffer });
-        text = result.value;
-      } else if (ext === "txt") {
-        text = await file.text();
-      } else {
-        alert("Please upload a .txt or .docx file.");
+    generateBtn.addEventListener("click", () => {
+      const text = examText.value.trim();
+      if (!text) {
+        alert("Please paste your exam text first.");
         return;
       }
 
       questions = parseQuestions(text);
       if (questions.length === 0) {
-        alert("No valid questions found!");
+        alert("No valid questions found! Make sure they start with 1., 2., or 1)");
         return;
       }
 
-      fileInput.style.display = "none";
-      instruction.style.display = "none";
+      inputArea.style.display = "none";
       exam.style.display = "block";
       currentIndex = 0;
       showQuestion();
       startTimer();
-    }
+    });
 
     function parseQuestions(text) {
-      const lines = text.split(/\n+/);
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
       const parsed = [];
       let currentQ = null;
 
       lines.forEach(line => {
-        const qMatch = line.match(/^\d+\.\s*(.*)/);
-        const optMatch = line.match(/^[A-Da-d]\.\s*(.*)/);
+        const qMatch = line.match(/^(\d+[\.\)\-])\s*(.*)/); // 1. or 1) or 1-
+        const optMatch = line.match(/^([A-Da-d][\.\)\-])\s*(.*)/); // A. or A) or A-
 
         if (qMatch) {
           if (currentQ) parsed.push(currentQ);
-          currentQ = { question: qMatch[1], options: [] };
+          currentQ = { question: qMatch[2].trim(), options: [] };
         } else if (optMatch && currentQ) {
-          currentQ.options.push(optMatch[1]);
+          currentQ.options.push(optMatch[2].trim());
         }
       });
 
@@ -176,9 +196,7 @@
       interval = setInterval(() => {
         timer--;
         timerDiv.textContent = timer;
-        if (timer <= 0) {
-          nextQuestion();
-        }
+        if (timer <= 0) nextQuestion();
       }, 1000);
     }
 
