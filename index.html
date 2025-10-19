@@ -1,273 +1,404 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Online Exam Presentation System</title>
 
-<!-- PowerPoint generator -->
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.11.1/dist/pptxgen.bundle.js"></script>
+<!-- Try to load PptxGenJS from a stable CDN. We also have a fallback loader in script. -->
+<script src="https://unpkg.com/pptxgenjs@3.11.1/dist/pptxgen.bundle.js"></script>
 
 <style>
-  body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(135deg, #007bff, #00c6ff);
-    height: 100vh;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  :root{
+    --primary:#0366d6; --accent:#00c6ff; --bg-grad: linear-gradient(135deg,var(--primary),#00b4ff);
+    --card:#ffffff; --muted:#6b7280;
   }
-  .container {
-    background: #fff;
-    width: 900px;
-    max-width: 95%;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    text-align: center;
-  }
-  h2 {
-    color: #007bff;
-    font-size: 32px;
-    margin-bottom: 20px;
-  }
-  textarea {
-    width: 100%;
-    height: 250px;
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    resize: none;
-    font-size: 18px;
-  }
-  button {
-    margin: 10px;
-    padding: 14px 28px;
-    border: none;
-    border-radius: 10px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    font-size: 20px;
-    transition: all 0.2s;
-  }
-  button:hover {
-    background-color: #0056b3;
-    transform: scale(1.05);
-  }
-  #exam {
-    display: none;
-  }
-  .question {
-    font-size: 30px;
-    font-weight: bold;
-    margin-bottom: 25px;
-    color: #333;
-  }
-  .option {
-    margin: 10px auto;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    width: 80%;
-    text-align: left;
-    font-size: 22px;
-    background: #f7f9fc;
-  }
-  .timer {
-    font-size: 30px;
-    color: #dc3545;
-    margin-top: 20px;
-    font-weight: bold;
-  }
-  .nav-btns {
-    margin-top: 25px;
-  }
-  .success {
-    color: green;
-    font-size: 22px;
-  }
+  body{font-family: "Segoe UI", Roboto, Arial, sans-serif; margin:0; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; background:var(--bg-grad);}
+  .wrap{width:960px; max-width:96%; padding:30px; border-radius:16px; background:var(--card); box-shadow:0 10px 40px rgba(0,0,0,0.15);}
+  h1{color:var(--primary); font-size:30px; margin:0 0 10px;}
+  p.lead{color:var(--muted); margin:0 0 16px;}
+  pre.example{background:#f0f8ff; padding:12px; border-radius:8px; font-size:14px;}
+  textarea#examText{width:100%; height:210px; padding:12px; font-size:16px; border-radius:8px; border:1px solid #e6eefc; resize:vertical;}
+  .row{display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap;}
+  button.btn{background:var(--primary); color:#fff; border:0; padding:12px 18px; border-radius:10px; font-size:16px; cursor:pointer;}
+  button.btn.secondary{background:#0b74ff;}
+  button.btn.ghost{background:#f3f6fb; color:#123; border:1px solid #dbeffd;}
+  .hidden{display:none;}
+  .stage{margin-top:18px;}
+  .question{font-size:28px; font-weight:700; color:#0f172a; margin-bottom:14px;}
+  .option{width:90%; margin:8px auto; padding:14px; border-radius:10px; background:#fbfdff; border:1px solid #eef6ff; font-size:20px; text-align:left;}
+  .timer{font-size:26px; color:#c53030; margin-top:12px; font-weight:700;}
+  .controls{margin-top:16px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap;}
+  .inputSmall{padding:8px 10px; border-radius:8px; border:1px solid #e6eefc; font-size:16px;}
+  .status{font-size:14px; color:green; margin-left:8px;}
+  .error{color:#b91c1c;}
+  footer.note{margin-top:14px; color:var(--muted); font-size:13px;}
 </style>
 </head>
 <body>
+  <div class="wrap" role="main">
+    <h1>📝 Online Exam Presentation</h1>
+    <p class="lead">Paste exam text (1., A.) → Generate → Start. Large texts, 60s timer, PPT download, jump/preview & repeat item.</p>
 
-<div class="container" id="inputContainer">
-  <h2>📝 Online Exam Generator</h2>
-  <p style="font-size:18px;">Paste your exam text below. Format should be like:</p>
-  <pre style="text-align:left; background:#eef5ff; padding:10px; border-radius:10px; font-size:16px;">
+    <pre class="example">
+Example format:
 1. What is the capital of the Philippines?
 A. Davao
 B. Manila
 C. Cebu
 D. Baguio
-  </pre>
-  <textarea id="examText" placeholder="Paste your exam text here..."></textarea><br>
-  <button id="generateBtn">Generate Exam Slides</button>
-</div>
 
-<div class="container" id="startContainer" style="display:none;">
-  <h2>Exam Generated Successfully!</h2>
-  <p class="success">✅ Your exam is ready to present.</p>
-  <button id="startExamBtn">Start Exam</button>
-  <button id="downloadPPTBtn">Download as PowerPoint</button>
-</div>
+2) What color is the sky?
+A) Blue
+B) Green
+C) Red
+D) Yellow
+    </pre>
 
-<div class="container" id="exam">
-  <div id="questionText" class="question"></div>
-  <div id="options"></div>
-  <div class="timer">⏳ Time left: <span id="timer">60</span>s</div>
-  <div class="nav-btns">
-    <button id="prevBtn">⬅ Previous</button>
-    <button id="nextBtn">Next ➡</button>
+    <textarea id="examText" placeholder="Paste your exam text here..."></textarea>
+
+    <div class="row">
+      <button id="generateBtn" class="btn">Generate Slides</button>
+      <button id="downloadPPTBtnMain" class="btn ghost" disabled>Download PPT (quick)</button>
+      <span id="pptStatus" class="status"></span>
+    </div>
+
+    <!-- START screen -->
+    <div id="startPanel" class="stage hidden">
+      <p class="lead">Slides generated. You may start presenting or download as PowerPoint.</p>
+      <div class="row">
+        <button id="startBtn" class="btn">Start Exam</button>
+        <button id="editBtn" class="btn ghost">Edit Text</button>
+        <button id="downloadPPTBtn" class="btn secondary">Download as PowerPoint</button>
+      </div>
+    </div>
+
+    <!-- Presentation stage -->
+    <div id="presentPanel" class="stage hidden" aria-live="polite">
+      <div id="qBox">
+        <div id="questionText" class="question"></div>
+        <div id="options"></div>
+        <div class="timer">⏳ Time left: <span id="timer">60</span>s</div>
+      </div>
+
+      <div class="controls">
+        <button id="prevBtn" class="btn ghost">⬅ Previous</button>
+        <button id="nextBtn" class="btn">Next ➡</button>
+
+        <!-- jump / preview / repeat controls -->
+        <label style="display:flex; align-items:center; gap:8px;">
+          Go to item
+          <input id="gotoNum" class="inputSmall" type="number" min="1" style="width:90px" />
+        </label>
+        <button id="gotoBtn" class="btn ghost">Jump</button>
+
+        <button id="repeatItemBtn" class="btn ghost">🔁 Repeat Item</button>
+      </div>
+    </div>
+
+    <!-- End panel -->
+    <div id="endPanel" class="stage hidden">
+      <h2 style="margin:6px 0;">🎉 Exam Presentation Finished!</h2>
+      <div class="row">
+        <button id="repeatExamBtn" class="btn">🔁 Repeat Exam</button>
+        <button id="downloadAgainBtn" class="btn secondary">⬇ Download as PowerPoint</button>
+        <button id="backToEditBtn" class="btn ghost">Edit / New Exam</button>
+      </div>
+    </div>
+
+    <footer class="note">If PPT download fails: check console (F12 → Console) for errors or try a different network/browser. Running from `file://` may cause download restrictions — use a simple static server (e.g., `npx http-server`) if needed.</footer>
   </div>
-</div>
-
-<div class="container" id="endContainer" style="display:none;">
-  <h2>🎉 Exam Presentation Finished!</h2>
-  <p class="success">All questions have been presented.</p>
-  <button id="repeatExamBtn">🔁 Repeat Exam</button>
-  <button id="downloadAgainBtn">⬇ Download as PowerPoint</button>
-</div>
 
 <script>
-  const examText = document.getElementById("examText");
-  const generateBtn = document.getElementById("generateBtn");
-  const exam = document.getElementById("exam");
-  const startContainer = document.getElementById("startContainer");
-  const questionText = document.getElementById("questionText");
-  const optionsDiv = document.getElementById("options");
-  const timerSpan = document.getElementById("timer");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const startExamBtn = document.getElementById("startExamBtn");
-  const inputContainer = document.getElementById("inputContainer");
-  const downloadPPTBtn = document.getElementById("downloadPPTBtn");
-  const endContainer = document.getElementById("endContainer");
-  const repeatExamBtn = document.getElementById("repeatExamBtn");
-  const downloadAgainBtn = document.getElementById("downloadAgainBtn");
+(() => {
+  // Elements
+  const examText = document.getElementById('examText');
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadPPTBtnMain = document.getElementById('downloadPPTBtnMain');
+  const pptStatus = document.getElementById('pptStatus');
 
+  const startPanel = document.getElementById('startPanel');
+  const startBtn = document.getElementById('startBtn');
+  const editBtn = document.getElementById('editBtn');
+  const downloadPPTBtn = document.getElementById('downloadPPTBtn');
+
+  const presentPanel = document.getElementById('presentPanel');
+  const questionText = document.getElementById('questionText');
+  const optionsDiv = document.getElementById('options');
+  const timerEl = document.getElementById('timer');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const gotoNum = document.getElementById('gotoNum');
+  const gotoBtn = document.getElementById('gotoBtn');
+  const repeatItemBtn = document.getElementById('repeatItemBtn');
+
+  const endPanel = document.getElementById('endPanel');
+  const repeatExamBtn = document.getElementById('repeatExamBtn');
+  const downloadAgainBtn = document.getElementById('downloadAgainBtn');
+  const backToEditBtn = document.getElementById('backToEditBtn');
+
+  // State
   let questions = [];
   let currentIndex = 0;
   let timer = 60;
-  let interval;
+  let tickID = null;
 
-  generateBtn.addEventListener("click", () => {
-    const text = examText.value.trim();
-    if (!text) {
-      alert("Please paste your exam text first!");
-      return;
-    }
-    questions = parseQuestions(text);
-    if (questions.length === 0) {
-      alert("No valid questions found! Make sure your format uses 1. and A.–D. options.");
-      return;
-    }
-    inputContainer.style.display = "none";
-    startContainer.style.display = "block";
-  });
+  // PPT library readiness helper
+  let pptReady = (typeof PptxGenJS !== 'undefined');
+  let pptReadyPromiseResolve;
+  const pptReadyPromise = new Promise((resolve) => { pptReadyPromiseResolve = resolve; });
+  if (pptReady) pptReadyPromiseResolve(true);
 
-  startExamBtn.addEventListener("click", () => {
-    startContainer.style.display = "none";
-    exam.style.display = "block";
-    currentIndex = 0;
-    showQuestion();
-    startTimer();
-  });
-
-  function parseQuestions(text) {
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
-    const parsed = [];
-    let currentQ = null;
-
-    lines.forEach(line => {
-      const qMatch = line.match(/^(\d+[\.\)\-])\s*(.*)/);
-      const optMatch = line.match(/^([A-Da-d][\.\)\-])\s*(.*)/);
-
-      if (qMatch) {
-        if (currentQ) parsed.push(currentQ);
-        currentQ = { question: qMatch[2].trim(), options: [] };
-      } else if (optMatch && currentQ) {
-        currentQ.options.push(optMatch[1].toUpperCase() + " " + optMatch[2].trim());
+  // If library not loaded yet, attempt to dynamically load fallback CDN and timeout
+  if (!pptReady) {
+    // try jsdelivr as fallback
+    const fallbackUrl = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.11.1/dist/pptxgen.bundle.js';
+    const s = document.createElement('script');
+    s.src = fallbackUrl;
+    s.onload = () => {
+      if (typeof PptxGenJS !== 'undefined') {
+        pptReady = true;
+        pptStatus.textContent = 'PPT ready';
+        pptReadyPromiseResolve(true);
+        downloadPPTBtnMain.disabled = false;
       }
-    });
-    if (currentQ) parsed.push(currentQ);
+    };
+    s.onerror = () => {
+      console.warn('Fallback PPTX script load failed.');
+      pptStatus.innerHTML = '<span class="error">PPT lib not available</span>';
+      pptReadyPromiseResolve(false);
+    };
+    document.head.appendChild(s);
+    // set a timeout to mark not ready
+    setTimeout(() => {
+      if (!pptReady) {
+        pptStatus.innerHTML = '<span class="error">PPT lib not loaded (network blocked?)</span>';
+        pptReadyPromiseResolve(false);
+      }
+    }, 4000);
+  } else {
+    pptStatus.textContent = 'PPT ready';
+    downloadPPTBtnMain.disabled = false;
+  }
+
+  // Parse function (robust)
+  function parseQuestions(text){
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+    const parsed = [];
+    let current = null;
+    for (const raw of lines) {
+      const qMatch = raw.match(/^(\d+[\.\)\-:])\s*(.*)$/);
+      const optMatch = raw.match(/^([A-Da-d][\.\)\-:])\s*(.*)$/);
+      if (qMatch) {
+        if (current) parsed.push(current);
+        current = { question: qMatch[2].trim(), options: [] };
+      } else if (optMatch && current) {
+        const letter = optMatch[1].slice(0,1).toUpperCase();
+        current.options.push(`${letter}. ${optMatch[2].trim()}`);
+      } else {
+        // continuation of question
+        if (current) current.question += ' ' + raw;
+      }
+    }
+    if (current) parsed.push(current);
     return parsed;
   }
 
-  function showQuestion() {
-    const q = questions[currentIndex];
-    questionText.textContent = `${currentIndex + 1}. ${q.question}`;
-    optionsDiv.innerHTML = "";
-    q.options.forEach(opt => {
-      const div = document.createElement("div");
-      div.className = "option";
-      div.textContent = opt;
-      optionsDiv.appendChild(div);
+  // UI helpers
+  function showQuestion(index){
+    const q = questions[index];
+    questionText.textContent = `${index+1}. ${q.question}`;
+    optionsDiv.innerHTML = '';
+    q.options.forEach(o => {
+      const el = document.createElement('div');
+      el.className = 'option';
+      el.textContent = o;
+      optionsDiv.appendChild(el);
     });
     timer = 60;
-    timerSpan.textContent = timer;
+    timerEl.textContent = timer;
   }
 
-  function startTimer() {
-    clearInterval(interval);
-    interval = setInterval(() => {
+  function startTick(){
+    clearInterval(tickID);
+    tickID = setInterval(()=>{
       timer--;
-      timerSpan.textContent = timer;
+      timerEl.textContent = timer;
       if (timer <= 0) nextQuestion();
-    }, 1000);
+    },1000);
   }
 
-  function nextQuestion() {
+  function nextQuestion(){
     if (currentIndex < questions.length - 1) {
       currentIndex++;
-      showQuestion();
-      startTimer();
+      showQuestion(currentIndex);
+      startTick();
     } else {
-      clearInterval(interval);
-      exam.style.display = "none";
-      endContainer.style.display = "block";
+      // finished
+      clearInterval(tickID);
+      presentPanel.classList.add('hidden');
+      endPanel.classList.remove('hidden');
     }
   }
 
-  function prevQuestion() {
+  function prevQuestion(){
     if (currentIndex > 0) {
       currentIndex--;
-      showQuestion();
-      startTimer();
+      showQuestion(currentIndex);
+      startTick();
     }
   }
 
-  nextBtn.addEventListener("click", nextQuestion);
-  prevBtn.addEventListener("click", prevQuestion);
+  // Generate slides
+  generateBtn.addEventListener('click', () => {
+    const t = examText.value.trim();
+    if (!t) { alert('Paste exam text first.'); return; }
+    questions = parseQuestions(t);
+    if (!questions.length) { alert('No valid questions found. Check numbering and A.-D. options.'); return; }
 
-  repeatExamBtn.addEventListener("click", () => {
-    endContainer.style.display = "none";
-    exam.style.display = "block";
-    currentIndex = 0;
-    showQuestion();
-    startTimer();
+    // Enable PPT quick button if lib already available
+    if (pptReady) downloadPPTBtnMain.disabled = false;
+    else downloadPPTBtnMain.disabled = true;
+
+    document.getElementById('startPanel').classList.remove('hidden');
+    // hide others
+    presentPanel.classList.add('hidden');
+    endPanel.classList.add('hidden');
+    // quick feedback
+    pptStatus.textContent = pptReady ? 'PPT ready' : 'PPT not loaded (may try fallback)';
   });
 
-  downloadPPTBtn.addEventListener("click", downloadPowerPoint);
-  downloadAgainBtn.addEventListener("click", downloadPowerPoint);
+  // start presenting
+  startBtn.addEventListener('click', () => {
+    document.getElementById('startPanel').classList.add('hidden');
+    presentPanel.classList.remove('hidden');
+    endPanel.classList.add('hidden');
+    currentIndex = 0;
+    showQuestion(currentIndex);
+    startTick();
+  });
 
-  function downloadPowerPoint() {
-    if (questions.length === 0) {
-      alert("No questions to export.");
+  // edit / back
+  editBtn.addEventListener('click', () => {
+    document.getElementById('startPanel').classList.add('hidden');
+    // show input area
+    document.querySelector('.wrap').scrollIntoView({behavior:'smooth'});
+  });
+
+  prevBtn.addEventListener('click', prevQuestion);
+  nextBtn.addEventListener('click', nextQuestion);
+
+  // Jump to item
+  gotoBtn.addEventListener('click', ()=>{
+    const n = parseInt(gotoNum.value);
+    if (!n || n < 1 || n > questions.length) { alert('Enter valid item number between 1 and ' + questions.length); return; }
+    currentIndex = n - 1;
+    showQuestion(currentIndex);
+    startTick();
+  });
+
+  // Repeat item (reset timer)
+  repeatItemBtn.addEventListener('click', ()=>{
+    showQuestion(currentIndex); // resets timer to 60
+    startTick();
+  });
+
+  // Repeat exam
+  repeatExamBtn.addEventListener('click', ()=>{
+    endPanel.classList.add('hidden');
+    presentPanel.classList.remove('hidden');
+    currentIndex = 0;
+    showQuestion(currentIndex);
+    startTick();
+  });
+
+  backToEditBtn.addEventListener('click', ()=>{
+    endPanel.classList.add('hidden');
+    document.getElementById('startPanel').classList.remove('hidden');
+  });
+
+  // PPT generation function with robust waiting
+  async function ensurePptReady(timeoutMs = 5000){
+    try {
+      const ok = await Promise.race([
+        pptReadyPromise,
+        new Promise(res => setTimeout(() => res(false), timeoutMs))
+      ]);
+      return !!ok && (typeof PptxGenJS !== 'undefined');
+    } catch(e){
+      return false;
+    }
+  }
+
+  async function generatePptFile(filename = 'Exam_Presentation.pptx'){
+    if (!questions.length) { alert('No questions to export.'); return; }
+
+    const ok = await ensurePptReady();
+    if (!ok) {
+      alert('PowerPoint library not available. Check network or console for details.');
+      console.error('PPTX library missing:', typeof PptxGenJS);
       return;
     }
-    const pptx = new PptxGenJS();
-    questions.forEach((q, i) => {
-      const slide = pptx.addSlide();
-      slide.addText(`${i + 1}. ${q.question}`, { x: 0.5, y: 0.5, fontSize: 28, color: "003366", bold: true });
-      q.options.forEach((opt, idx) => {
-        slide.addText(opt, { x: 1, y: 1.2 + idx * 0.7, fontSize: 24, color: "000000" });
-      });
-    });
-    pptx.writeFile({ fileName: "Exam_Presentation.pptx" });
-  }
-</script>
 
+    try {
+      const pptx = new PptxGenJS();
+      pptx.author = 'Online Exam Generator';
+      pptx.layout = 'LAYOUT_WIDE'; // widescreen
+
+      questions.forEach((q,i) => {
+        const s = pptx.addSlide();
+        s.background = { color: 'FFFFFF' };
+        s.addText(`${i+1}. ${q.question}`, { x:0.5, y:0.4, w:'90%', fontSize:28, bold:true, color:'003366', align:'left' });
+        q.options.forEach((opt, idx) => {
+          s.addText(opt, { x:0.7, y:1.4 + idx*0.6, w:'85%', fontSize:22, color:'000000', align:'left' });
+        });
+      });
+
+      // writeFile returns a promise
+      await pptx.writeFile({ fileName: filename });
+    } catch(err){
+      console.error('PPTX generation error:', err);
+      alert('Failed to create PPT. See console for details.');
+    }
+  }
+
+  // Download handlers
+  downloadPPTBtn.addEventListener('click', async ()=> {
+    downloadPPTBtn.disabled = true;
+    downloadPPTBtn.textContent = 'Preparing...';
+    await generatePptFile();
+    downloadPPTBtn.disabled = false;
+    downloadPPTBtn.textContent = 'Download as PowerPoint';
+  });
+
+  downloadPPTBtnMain.addEventListener('click', async ()=> {
+    downloadPPTBtnMain.disabled = true;
+    downloadPPTBtnMain.textContent = 'Preparing...';
+    await generatePptFile();
+    downloadPPTBtnMain.disabled = false;
+    downloadPPTBtnMain.textContent = 'Download PPT (quick)';
+  });
+
+  downloadAgainBtn.addEventListener('click', async ()=> {
+    downloadAgainBtn.disabled = true;
+    downloadAgainBtn.textContent = 'Preparing...';
+    await generatePptFile();
+    downloadAgainBtn.disabled = false;
+    downloadAgainBtn.textContent = '⬇ Download as PowerPoint';
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e)=>{
+    if (!presentPanel.classList.contains('hidden')) {
+      if (e.key === 'ArrowRight') nextQuestion();
+      if (e.key === 'ArrowLeft') prevQuestion();
+      if (e.key === ' ') { e.preventDefault(); if (tickID) { clearInterval(tickID); tickID=null; } else startTick(); }
+    }
+  });
+
+})();
+</script>
 </body>
 </html>
