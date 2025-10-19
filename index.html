@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade 7 English Exam - Second Quarter</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7fc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .exam-container {
+    background: white;
+    width: 80%;
+    max-width: 900px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  }
+  h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  .question {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  .options label {
+    display: block;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #2980b9;
+  }
+  #timer {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #e74c3c;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="exam-container">
+  <h2>Grade 7 English Exam (Second Quarter)</h2>
+  <div id="timer">Time left: 60s</div>
+  <div id="question-container"></div>
+  <div class="controls">
+    <button onclick="prevQuestion()">Previous</button>
+    <button onclick="nextQuestion()">Next</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  "In the story My Father Goes to Court, what is the main reason the father is taken to court?",
+  "How does the wealthy family in the story behave towards the poor family?",
+  "What is the father’s response to the accusations in court?",
+  "What theme is explored in the story 'My Father Goes to Court'?",
+  "What is the judge’s reaction to the father’s defense in court?",
+  // ... continue up to 50 questions
+];
+
+const options = [
+  ["A. He stole food from a wealthy family.", "B. He borrowed money and didn’t repay it.", "C. He trespassed on the neighbor's property.", "D. He was accused of enjoying the smell of the rich family's food."],
+  ["A. They ignore them completely.", "B. They accuse them of stealing their wealth.", "C. They invite them over for dinner frequently.", "D. They resent them for 'stealing' the smell of their food."],
+  ["A. He pays the family in cash.", "B. He apologizes and promises to pay a fine.", "C. He denies everything and argues with the judge.", "D. He shakes coins in his hand to 'repay' the family with the sound of money."],
+  ["A. The importance of wealth and status", "B. The harm of stealing food from neighbors", "C. The value of family and humor in hard times", "D. The dangers of going to court without a lawyer"],
+  ["A. He fines the father.", "B. He finds the situation laughable.", "C. He rules in favor of the wealthy family.", "D. He becomes angry and dismisses the case."],
+];
+
+let currentQuestion = 0;
+let timeLeft = 60;
+let timer;
+
+function showQuestion() {
+  const qContainer = document.getElementById('question-container');
+  qContainer.innerHTML = `<div class='question'>${currentQuestion + 1}. ${questions[currentQuestion]}</div>`;
+  const opts = options[currentQuestion].map(opt => `<label><input type='radio' name='q${currentQuestion}'> ${opt}</label>`).join('');
+  qContainer.innerHTML += `<div class='options'>${opts}</div>`;
+  resetTimer();
+}
+
+function nextQuestion() {
+  if (currentQuestion < questions.length - 1) {
+    currentQuestion++;
+    showQuestion();
+  } else {
+    alert('Exam completed!');
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    showQuestion();
+  }
+}
+
+function resetTimer() {
+  clearInterval(timer);
+  timeLeft = 60;
+  document.getElementById('timer').textContent = `Time left: ${timeLeft}s`;
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = `Time left: ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      nextQuestion();
+    }
+  }, 1000);
+}
+
+showQuestion();
+</script>
+</body>
+</html>
