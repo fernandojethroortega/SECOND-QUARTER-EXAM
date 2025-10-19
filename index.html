@@ -1,273 +1,212 @@
-import React, { useState, useEffect, useRef } from "react";
-
-/**
- * Online Exam Presentation System (single-file React component)
- * - Upload .txt or .docx (uses mammoth) or paste raw text
- * - Auto-parse questions and options
- * - Present each question as a slide with a 60-second countdown timer
- * - Auto-advance when timer reaches 0
- * - Manual controls: Prev / Next / Pause / Restart
- *
- * Usage notes:
- * - This is a self-contained component intended to be dropped into a React app.
- * - Install dependencies:
- *    npm install mammoth
- * - Add Tailwind CSS to your project (this component uses Tailwind classes).
- *
- * Parsing heuristics (works for many teacher-uploaded formats):
- * - Each question should start with a number followed by a dot or parenthesis (e.g. "1.", "1)" or "1 ")
- * - Options usually start with A., B., C., D. or A), B)
- * - The parser will attempt to group question text and options together.
- */
-
-// NOTE: mammoth only works in browsers via bundler (imported) — ensure you installed it.
-import mammoth from "mammoth";
-
-export default function ExamPresentation() {
-  const [rawText, setRawText] = useState("");
-  const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(60);
-  const [running, setRunning] = useState(false);
-  const timerRef = useRef(null);
-  const [filename, setFilename] = useState(null);
-
-  useEffect(() => {
-    if (running) {
-      timerRef.current = setInterval(() => {
-        setSecondsLeft((s) => s - 1);
-      }, 1000);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Exam Presentation System</title>
+  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    return () => clearInterval(timerRef.current);
-  }, [running]);
-
-  useEffect(() => {
-    if (secondsLeft <= 0 && questions.length > 0) {
-      // Auto-advance
-      handleNext();
+    #container {
+      width: 80%;
+      max-width: 800px;
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
     }
-  }, [secondsLeft]);
-
-  useEffect(() => {
-    // Reset timer when slide changes
-    setSecondsLeft(60);
-  }, [currentIndex]);
-
-  function resetTimer() {
-    setSecondsLeft(60);
-    setRunning(true);
-  }
-
-  function handleNext() {
-    setRunning(false);
-    clearInterval(timerRef.current);
-    setTimeout(() => {
-      setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
-      setSecondsLeft(60);
-      setRunning(true);
-    }, 200); // small delay for UX
-  }
-
-  function handlePrev() {
-    setRunning(false);
-    clearInterval(timerRef.current);
-    setTimeout(() => {
-      setCurrentIndex((i) => Math.max(i - 1, 0));
-      setSecondsLeft(60);
-      setRunning(true);
-    }, 200);
-  }
-
-  function handlePauseResume() {
-    setRunning((r) => !r);
-  }
-
-  async function handleFile(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    setFilename(file.name);
-    const ext = file.name.split(".").pop().toLowerCase();
-
-    if (ext === "txt") {
-      const txt = await file.text();
-      setRawText(txt);
-      const qs = parseQuestions(txt);
-      setQuestions(qs);
-      setCurrentIndex(0);
-      setRunning(false);
-      setSecondsLeft(60);
-    } else if (ext === "docx") {
-      // Use mammoth to convert to plain text
-      const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer });
-      const text = result.value;
-      setRawText(text);
-      const qs = parseQuestions(text);
-      setQuestions(qs);
-      setCurrentIndex(0);
-      setRunning(false);
-      setSecondsLeft(60);
-    } else {
-      alert("Unsupported file type. Please upload .txt or .docx files.");
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #2563eb;
     }
-  }
-
-  function handlePasteText() {
-    const qs = parseQuestions(rawText);
-    setQuestions(qs);
-    setCurrentIndex(0);
-    setRunning(false);
-    setSecondsLeft(60);
-  }
-
-  // A simple heuristic parser to detect numbered questions and options (A/B/C/D)
-  function parseQuestions(text) {
-    if (!text) return [];
-    // Normalize line breaks
-    const lines = text.replace(/\r/g, "").split(/\n+/).map(l => l.trim()).filter(Boolean);
-
-    const qIndices = [];
-    // Identify lines that start a question: '1.' '1)' '1 ' or '1\u0020' etc.
-    const questionStartRegex = /^\s*\d+\s*[\.|\)|-|:]\s*/;
-    const optionRegex = /^[A-D]\s*[\.|\)]\s*/i;
-
-    // First pass: find question starts by line index
-    lines.forEach((ln, idx) => {
-      if (questionStartRegex.test(ln)) qIndices.push(idx);
-    });
-
-    // If no numbered starts found, try detecting lines that end with question mark
-    if (qIndices.length === 0) {
-      lines.forEach((ln, idx) => {
-        if (ln.endsWith('?')) qIndices.push(idx);
-      });
+    .options {
+      margin-top: 20px;
+      text-align: left;
     }
-
-    // If still empty, treat whole document as one question
-    if (qIndices.length === 0) return [{ text: lines.join(' '), options: [] }];
-
-    const qs = [];
-    for (let i = 0; i < qIndices.length; i++) {
-      const start = qIndices[i];
-      const end = i + 1 < qIndices.length ? qIndices[i + 1] : lines.length;
-      const block = lines.slice(start, end);
-      // Separate question line(s) from options
-      const questionLines = [];
-      const options = [];
-      for (const ln of block) {
-        if (optionRegex.test(ln)) {
-          options.push(ln.replace(optionRegex, (m) => '').trim());
-        } else {
-          // If it begins with a number label, strip it
-          if (questionStartRegex.test(ln)) {
-            questionLines.push(ln.replace(questionStartRegex, '').trim());
-          } else {
-            // continue of question text
-            // If it looks like an option but starts with letters spelled out, try to detect
-            questionLines.push(ln);
-          }
-        }
-      }
-      qs.push({ text: questionLines.join(' '), options });
+    .option {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: 0.2s;
     }
+    .option:hover {
+      background-color: #e0f2fe;
+    }
+    #controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #1e40af;
+    }
+    #timer {
+      font-size: 20px;
+      font-weight: bold;
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Online Exam Presentation System</h1>
+    <input type="file" id="fileInput" accept=".txt,.docx" />
+    <p id="instruction">Upload a .txt or .docx file to start.</p>
 
-    return qs;
-  }
-
-  const current = questions[currentIndex] || null;
-
-  return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-5xl mx-auto">
-        <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Online Exam Presentation</h1>
-          <div className="text-sm text-slate-600">Slides auto-advance after 60 seconds</div>
-        </header>
-
-        <section className="bg-white p-4 rounded-lg shadow mb-6">
-          <label className="block mb-2 font-medium">Upload exam file (.txt or .docx) or paste text</label>
-          <div className="flex gap-3">
-            <input type="file" accept=".txt,.docx" onChange={handleFile} className="p-2 border rounded" />
-            <div className="flex-1">
-              <textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows={4} className="w-full p-2 border rounded" placeholder="Or paste the exam text here then click Parse"></textarea>
-              <div className="mt-2 flex gap-2">
-                <button className="px-3 py-1 rounded bg-indigo-600 text-white" onClick={handlePasteText}>Parse</button>
-                <button className="px-3 py-1 rounded border" onClick={() => { setRawText(''); setQuestions([]); setFilename(null); setCurrentIndex(0); setRunning(false); setSecondsLeft(60); }}>Clear</button>
-                {filename && <div className="ml-auto text-sm text-slate-600">Loaded: {filename}</div>}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 text-sm text-slate-500">Tip: Format your questions with numbering (1., 2.) and options with A., B., C., D. for best results.</div>
-        </section>
-
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-white rounded shadow p-6 h-96 flex flex-col">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="text-slate-500">Question {questions.length ? `${currentIndex + 1} / ${questions.length}` : "-"}</div>
-                <h2 className="text-xl font-semibold mt-1">{current ? current.text : 'No question loaded'}</h2>
-              </div>
-              <div className="text-right">
-                <div className="text-4xl font-bold">{String(secondsLeft).padStart(2, '0')}</div>
-                <div className="text-sm text-slate-500">seconds</div>
-              </div>
-            </div>
-
-            <div className="flex-1">
-              {current && current.options && current.options.length > 0 ? (
-                <ul className="space-y-3">
-                  {current.options.map((opt, idx) => (
-                    <li key={idx} className="p-3 border rounded">{String.fromCharCode(65 + idx)}. {opt}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-slate-500 italic">No options detected for this question.</div>
-              )}
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              <button className="px-4 py-2 rounded border" onClick={handlePrev} disabled={currentIndex===0}>Prev</button>
-              <button className="px-4 py-2 rounded border" onClick={handleNext} disabled={currentIndex>=questions.length-1}>Next</button>
-              <button className="px-4 py-2 rounded bg-yellow-400" onClick={handlePauseResume}>{running ? 'Pause' : 'Resume'}</button>
-              <button className="px-4 py-2 rounded bg-red-500 text-white" onClick={() => { setCurrentIndex(0); setRunning(false); setSecondsLeft(60); }}>Restart</button>
-
-              <div className="ml-auto text-sm text-slate-600">Auto-advance when timer hits 0</div>
-            </div>
-          </div>
-
-          <aside className="bg-white rounded shadow p-4 h-96 overflow-auto">
-            <h3 className="font-semibold mb-3">Slides Preview</h3>
-            {questions.length === 0 ? (
-              <div className="text-slate-500">No slides yet. Parse a document or paste text to create slides.</div>
-            ) : (
-              <ol className="list-decimal ml-5 space-y-2">
-                {questions.map((q, i) => (
-                  <li key={i} className={`p-2 rounded ${i===currentIndex ? 'bg-indigo-50' : ''}`}>
-                    <div className="font-medium">{q.text.length > 80 ? q.text.slice(0, 80)+"..." : q.text}</div>
-                    <div className="text-sm text-slate-600">{q.options.length ? q.options.map((o,ii)=>String.fromCharCode(65+ii)+') '+o).join(' • ') : 'No options'}</div>
-                    <div className="mt-2">
-                      <button className="text-sm px-2 py-1 border rounded" onClick={() => { setCurrentIndex(i); setSecondsLeft(60); setRunning(true); }}>Go to</button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium">Slide time (seconds)</label>
-              <div className="mt-2 flex gap-2">
-                <button className="px-2 py-1 border rounded" onClick={() => { setSecondsLeft(10); }}>Test 10s</button>
-                <button className="px-2 py-1 border rounded" onClick={() => { setSecondsLeft(30); }}>Test 30s</button>
-                <button className="px-2 py-1 border rounded" onClick={() => { setSecondsLeft(60); }}>Set 60s</button>
-                <div className="ml-auto text-xs text-slate-500">(Auto-advance uses the displayed seconds)</div>
-              </div>
-            </div>
-          </aside>
-        </section>
-
-        <footer className="mt-6 text-sm text-slate-500">Export / GitHub: Use this component in a React app. Consider adding server-side upload and storage if teachers need persistent hosting.</footer>
+    <div id="exam" style="display:none;">
+      <h2 id="questionText"></h2>
+      <div class="options" id="options"></div>
+      <div id="controls">
+        <button id="prevBtn">⬅ Prev</button>
+        <div id="timer">60</div>
+        <button id="nextBtn">Next ➡</button>
       </div>
     </div>
-  );
-}
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const exam = document.getElementById("exam");
+    const questionText = document.getElementById("questionText");
+    const optionsDiv = document.getElementById("options");
+    const timerDiv = document.getElementById("timer");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const instruction = document.getElementById("instruction");
+
+    let questions = [];
+    let currentIndex = 0;
+    let timer = 60;
+    let interval;
+
+    fileInput.addEventListener("change", handleFile);
+
+    async function handleFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const ext = file.name.split(".").pop().toLowerCase();
+      let text = "";
+
+      if (ext === "docx") {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await window.mammoth.extractRawText({ arrayBuffer });
+        text = result.value;
+      } else if (ext === "txt") {
+        text = await file.text();
+      } else {
+        alert("Please upload a .txt or .docx file.");
+        return;
+      }
+
+      questions = parseQuestions(text);
+      if (questions.length === 0) {
+        alert("No valid questions found!");
+        return;
+      }
+
+      fileInput.style.display = "none";
+      instruction.style.display = "none";
+      exam.style.display = "block";
+      currentIndex = 0;
+      showQuestion();
+      startTimer();
+    }
+
+    function parseQuestions(text) {
+      const lines = text.split(/\n+/);
+      const parsed = [];
+      let currentQ = null;
+
+      lines.forEach(line => {
+        const qMatch = line.match(/^\d+\.\s*(.*)/);
+        const optMatch = line.match(/^[A-Da-d]\.\s*(.*)/);
+
+        if (qMatch) {
+          if (currentQ) parsed.push(currentQ);
+          currentQ = { question: qMatch[1], options: [] };
+        } else if (optMatch && currentQ) {
+          currentQ.options.push(optMatch[1]);
+        }
+      });
+
+      if (currentQ) parsed.push(currentQ);
+      return parsed;
+    }
+
+    function showQuestion() {
+      const q = questions[currentIndex];
+      questionText.textContent = `${currentIndex + 1}. ${q.question}`;
+      optionsDiv.innerHTML = "";
+      q.options.forEach(opt => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.textContent = opt;
+        optionsDiv.appendChild(div);
+      });
+      timer = 60;
+      timerDiv.textContent = timer;
+    }
+
+    function startTimer() {
+      clearInterval(interval);
+      interval = setInterval(() => {
+        timer--;
+        timerDiv.textContent = timer;
+        if (timer <= 0) {
+          nextQuestion();
+        }
+      }, 1000);
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        showQuestion();
+        startTimer();
+      } else {
+        clearInterval(interval);
+        questionText.textContent = "🎉 Exam Presentation Finished!";
+        optionsDiv.innerHTML = "";
+        timerDiv.textContent = "";
+        nextBtn.disabled = true;
+        prevBtn.disabled = true;
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+        startTimer();
+      }
+    }
+
+    nextBtn.addEventListener("click", nextQuestion);
+    prevBtn.addEventListener("click", prevQuestion);
+  </script>
+</body>
+</html>
