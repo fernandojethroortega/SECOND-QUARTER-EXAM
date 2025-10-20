@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,7 +92,6 @@
     height: 40px;
     font-size: 1.2em;
     cursor: pointer;
-    z-index: 999;
   }
 
   #fullscreenBtn:hover {
@@ -112,6 +112,7 @@
     padding: 5px 10px;
     border-radius: 5px;
   }
+
 </style>
 </head>
 <body>
@@ -125,22 +126,18 @@
   <button id="fullscreenBtn" title="Toggle Full Screen">⛶</button>
   <div id="question"></div>
   <div id="options"></div>
-
   <div>
     <button id="prevBtn">Previous</button>
     <button id="nextBtn">Next</button>
     <button id="repeatBtn" style="display:none;">Repeat Exam</button>
     <button id="readBtn">🔊 Read Question</button>
-    <button id="downloadBtn">⬇️ Download as PowerPoint</button>
   </div>
-
   <div style="margin-top:10px;">
     <label>Go to Item:</label>
     <select id="jumpSelect"></select>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.10.1/dist/pptxgen.bundle.js"></script>
 <script>
 let questions = [];
 let currentIndex = 0;
@@ -158,7 +155,6 @@ const repeatBtn = document.getElementById("repeatBtn");
 const jumpSelect = document.getElementById("jumpSelect");
 const readBtn = document.getElementById("readBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
-const downloadBtn = document.getElementById("downloadBtn");
 
 startExam.onclick = () => {
   const text = examInput.value.trim();
@@ -278,14 +274,10 @@ fullscreenBtn.onclick = () => {
   }
 };
 
-// Text-to-Speech (AI Reader)
+// AI Reader - Text-to-Speech
 readBtn.onclick = () => {
   const synth = window.speechSynthesis;
   synth.cancel();
-  if (!questions || questions.length === 0) {
-    alert("No question loaded yet!");
-    return;
-  }
   const q = questions[currentIndex];
   let textToRead = `Question ${currentIndex + 1}: ${q.question}. `;
   q.options.forEach((opt, i) => {
@@ -295,27 +287,6 @@ readBtn.onclick = () => {
   utter.lang = "en-US";
   utter.rate = 1;
   synth.speak(utter);
-};
-
-// PowerPoint Download
-downloadBtn.onclick = () => {
-  try {
-    const pptx = new PptxGenJS();
-    questions.forEach((q, i) => {
-      const slide = pptx.addSlide();
-      slide.addText(`Question ${i + 1}`, { x: 0.5, y: 0.5, fontSize: 28, bold: true });
-      slide.addText(q.question, { x: 0.5, y: 1.2, fontSize: 20, color: "363636" });
-      q.options.forEach((opt, j) => {
-        slide.addText(`${String.fromCharCode(65 + j)}. ${opt}`, {
-          x: 0.8, y: 1.8 + j * 0.5, fontSize: 18
-        });
-      });
-    });
-    pptx.writeFile({ fileName: "ExamPresentation.pptx" });
-  } catch (err) {
-    alert("⚠️ PowerPoint library not available. Check your internet connection.");
-    console.error(err);
-  }
 };
 </script>
 
